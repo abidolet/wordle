@@ -1,39 +1,52 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "./AuthContext";
 
 function Board() {
-  const word_to_guess = "words";
   const [board, setBoard] = useState(Array(6).fill(""));
   const [currentRow, setCurrentRow] = useState(0);
   const [colors, setColors] = useState(
     Array(6)
       .fill(null)
-      .map(() => Array(5).fill(""))
+      .map(() => Array(5).fill("")),
   );
-  const is_win = (currentBoard, row) => {
-    if (currentBoard[row] === word_to_guess) {
-      console.log("WIN!");
-    }
+
+  const { token } = useAuth();
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: token ? `Bearer ${token}` : "",
   };
 
-  const evaluateWord = (currentBoard, row) => {
-    const word = currentBoard[row];
-    const newRowColors = [];
+  useEffect(() => {
+    const initGame = async () => {
+      await fetch("https://localhost:8443/game/create", {
+        method: "POST",
+        headers,
+      });
 
-    for (let i = 0; i < word.length; i++) {
-      if (word_to_guess.includes(word[i])) {
-        if (word[i] === word_to_guess[i]) {
-          newRowColors.push("correct");
-        } else {
-          newRowColors.push("present");
-        }
-      } else {
-        newRowColors.push("absent");
+      const res = await fetch("https://localhost:8443/game/status", {
+        method: "GET",
+        headers,
+      });
+      if (res.ok) {
+        const data = await res.json();
       }
-    }
+    };
+    initGame();
+  }, []);
 
-    const newColorsBoard = [...colors];
-    newColorsBoard[row] = newRowColors;
-    setColors(newColorsBoard);
+  const submitGuess = async (word) => {
+    const res = await fetch("https://localhost:8443/game/guess", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ guess: word }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      console.log(data);
+    } else {
+      // Gestion erreur (ex: mot invalide)
+    }
   };
 
   const handleLogic = (event, currentBoard, row) => {
@@ -57,11 +70,9 @@ function Board() {
 
     if (event.key === "Enter") {
       if (currentWord.length === 5) {
-        console.log("Envoi au backend du mot :", currentWord);
+        submitGuess(currentWord);
         if (row < 5) {
           setCurrentRow(row + 1);
-          is_win(currentBoard, row);
-          evaluateWord(currentBoard, row);
         }
       }
     }

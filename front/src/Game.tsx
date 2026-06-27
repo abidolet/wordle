@@ -1,13 +1,11 @@
 import Board from "./components/Board";
 import { useAuth } from "./components/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 function Game() {
   const { isLoggedIn } = useAuth();
-  const navigate = useNavigate();
   if (!isLoggedIn) {
-    navigate("/");
-    P;
+    return <Navigate to="/" replace />;
   }
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
