@@ -1,6 +1,11 @@
 _format_version: "3.0"
 
-# --- NOUVEAU : On active le CORS globalement pour toutes les requêtes ---
+consumers:
+  - username: app-csharp
+    jwt_secrets:
+      - key: "auth"
+        secret: "${JWT_SECRET}"
+
 plugins:
   - name: cors
     config:
@@ -10,7 +15,6 @@ plugins:
         - GET
         - POST
         - PUT
-        - PATCH
         - DELETE
         - OPTIONS
       headers:
@@ -18,17 +22,8 @@ plugins:
         - Authorization
       credentials: true
       max_age: 3600
-# ------------------------------------------------------------------------
 
 services:
-  - name: front
-    host: front
-    port: 5173
-    routes:
-      - name: front
-        paths:
-          - /
-
   - name: auth
     url: http://auth:8080
     routes:
@@ -47,15 +42,40 @@ services:
         plugins:
           - name: jwt
             config:
-              uri_param_names:
-                - jwt
-              cookie_names: []
+              claims_to_verify:
+                - exp
+              header_names:
+                - Authorization
               key_claim_name: iss
-              secret_is_base64: false
-              run_on_preflight: true
+          - name: request-transformer
+            config:
+              add:
+                headers:
+                  - "X-User-Id:$(jwt.claims.sub)"
+                  - "X-JWT-Jti:$(jwt.claims.jti)"
+                  - "X-JWT-Exp:$(jwt.claims.exp)"
+                  - "X-JWT-Email:$(jwt.claims.email)"
 
-consumers:
-  - username: app-csharp
-    jwt_secrets:
-      - key: "auth"
-        secret: "${JWT_SECRET}"
+  - name: game
+    url: http://game:8080
+    routes:
+      - name: game
+        paths:
+          - /game
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              claims_to_verify:
+                - exp
+              header_names:
+                - Authorization
+              key_claim_name: iss
+
+  - name: front
+    url: http://front:5173
+    routes:
+      - name: front
+        paths:
+          - /
+        strip_path: false
