@@ -23,6 +23,13 @@ function me()
 	-H "Authorization: Bearer $1"
 }
 
+function refresh()
+{
+	curl -k -X POST https://localhost:8443/auth/refresh \
+	-H "Content-Type: application/json" \
+	-d '{"refreshToken":"'"$1"'"}'
+}
+
 function logout()
 {
 	curl -k -X POST https://localhost:8443/auth/logout \

@@ -20,6 +20,7 @@ services:
         paths:
           - /auth/register
           - /auth/login
+          - /auth/refresh
         strip_path: false
 
       - name: auth-private
@@ -27,7 +28,6 @@ services:
           - localhost
         paths:
           - /auth/me
-          - /auth/refresh
           - /auth/logout
         strip_path: false
         plugins:
@@ -44,4 +44,4 @@ consumers:
   - username: app-csharp
     jwt_secrets:
       - key: "auth"
-        secret: "uOP<o^3^jSstGS|ebD>hP.?*!9=]U9Y@|[nV=?Xt:l!eV^OCPy|9X?^@SNvuK,yF@zH&aQ?&Ra|-D.]7l5?K.@"
+        secret: "${JWT_SECRET}"
