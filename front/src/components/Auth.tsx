@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-function Home() {
+function Auth() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
@@ -21,14 +21,14 @@ function Home() {
         ) : (
           <div className="flex space-x-6">
             <Link
-              to="/signin"
+              to="/auth/login"
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded shadow transition-colors"
             >
               Sign In
             </Link>
 
             <Link
-              to="/signup"
+              to="/auth/register"
               className="bg-white hover:bg-gray-100 text-blue-600 border-2 border-blue-600 font-bold py-3 px-8 rounded shadow transition-colors"
             >
               Sign Up
@@ -37,7 +37,6 @@ function Home() {
         )}
       </div>
 
-      {/* Bouton de triche pour tester le visuel (à supprimer plus tard) */}
       <button
         onClick={() => setIsLoggedIn(!isLoggedIn)}
         className="mt-16 text-sm text-gray-400 underline hover:text-gray-600"
@@ -48,4 +47,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Auth;
