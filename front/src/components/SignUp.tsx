@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import { useNavigate } from "react-router-dom";
 
 function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const { isLoggedIn } = useAuth();
+  const navigate = useNavigate();
+  if (isLoggedIn) {
+    navigate("/");
+  }
   const handleSubmit = async (e) => {
     e.preventDefault();
 

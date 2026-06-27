@@ -1,8 +1,9 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext";
 
 function Auth() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 1. On récupère la fonction logout en plus de isLoggedIn
+  const { isLoggedIn, logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
@@ -12,12 +13,23 @@ function Auth() {
 
       <div className="flex flex-col items-center">
         {isLoggedIn ? (
-          <Link
-            to="/play"
-            className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 rounded-lg text-2xl shadow-lg transition-transform transform hover:scale-105"
-          >
-            PLAY
-          </Link>
+          /* --- NOUVEAU : Un conteneur pour le bouton PLAY et le bouton Déconnexion --- */
+          <div className="flex flex-col items-center space-y-6">
+            <Link
+              to="/play"
+              className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-12 rounded-lg text-2xl shadow-lg transition-transform transform hover:scale-105"
+            >
+              PLAY
+            </Link>
+
+            {/* Le bouton de déconnexion */}
+            <button
+              onClick={logout}
+              className="text-gray-500 hover:text-red-500 font-semibold underline transition-colors"
+            >
+              Se déconnecter
+            </button>
+          </div>
         ) : (
           <div className="flex space-x-6">
             <Link
@@ -36,13 +48,6 @@ function Auth() {
           </div>
         )}
       </div>
-
-      <button
-        onClick={() => setIsLoggedIn(!isLoggedIn)}
-        className="mt-16 text-sm text-gray-400 underline hover:text-gray-600"
-      >
-        Tester l'affichage (Connecté : {isLoggedIn ? "Oui" : "Non"})
-      </button>
     </div>
   );
 }

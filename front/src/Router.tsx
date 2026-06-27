@@ -6,15 +6,11 @@ import SignUp from "./components/SignUp";
 
 export const router = createBrowserRouter([
   {
-    path: "/game",
+    path: "/play",
     element: <Game />,
   },
   {
     path: "/",
-    element: <Auth />,
-  },
-  {
-    path: "/auth",
     element: <Auth />,
   },
   {

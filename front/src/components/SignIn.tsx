@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useAuth } from "./AuthContext";
+import { Link, Navigate } from "react-router-dom";
 
 function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { login, isLoggedIn } = useAuth();
+  if (isLoggedIn) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,6 +25,8 @@ function SignIn() {
       const data = await response.json();
 
       if (response.ok) {
+        login();
+        navigate("/play");
         console.log("Connexion réussie ! Voici le token :", data);
       } else {
         console.error("Identifiants incorrects :", data);
