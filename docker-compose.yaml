@@ -1,32 +1,59 @@
 services:
 
   kong:
-
     build:
       context: gateway
       dockerfile: Dockerfile
-
     env_file:
       - .env
-
     ports:
       - "8443:8443"
-
     volumes:
       - ./gateway/kong.yaml:/etc/kong/kong.yaml
-      - ssl:/etc/kong/ssl
-
+      - ssl_data:/etc/kong/ssl
     healthcheck:
       test: ["CMD", "kong", "health"]
       interval: 10s
       timeout: 5s
       retries: 5
-  
+    restart: unless-stopped
+
+  auth:
+    build:
+      context: auth
+      dockerfile: Dockerfile
+    environment:
+      ConnectionStrings__Default: ${AUTH_DB_CONNECTION}
+      Jwt_Secret: ${JWT_SECRET}
+      Jwt_Issuer: ${JWT_ISSUER}
+      Jwt_Audience: ${JWT_AUDIENCE}
+      ASPNETCORE_URLS: http://+:8080
+    volumes:
+      - dp_keys:/root/.aspnet/DataProtection-Keys
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
+      interval: 5s
+      retries: 10
+
   front:
     image: httpd:alpine
     volumes:
       - ./front:/usr/local/apache2/htdocs
-
+    restart: unless-stopped
 
 volumes:
-  ssl:
+  ssl_data:
+  dp_keys:
+  pg_data:

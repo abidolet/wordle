@@ -1,7 +1,6 @@
 _format_version: "3.0"
 
 services:
-
   - name: front
     url: http://front:80
     routes:
@@ -11,3 +10,38 @@ services:
         paths:
           - /
         strip_path: false
+
+  - name: auth
+    url: http://auth:8080
+    routes:
+      - name: auth-public
+        hosts:
+          - localhost
+        paths:
+          - /auth/register
+          - /auth/login
+        strip_path: false
+
+      - name: auth-private
+        hosts:
+          - localhost
+        paths:
+          - /auth/me
+          - /auth/refresh
+          - /auth/logout
+        strip_path: false
+        plugins:
+          - name: jwt
+            config:
+              uri_param_names:
+                - jwt
+              cookie_names: []
+              key_claim_name: iss
+              secret_is_base64: false
+              run_on_preflight: true
+
+consumers:
+  - username: app-csharp
+    jwt_secrets:
+      - key: "auth"
+        secret: "uOP<o^3^jSstGS|ebD>hP.?*!9=]U9Y@|[nV=?Xt:l!eV^OCPy|9X?^@SNvuK,yF@zH&aQ?&Ra|-D.]7l5?K.@"
