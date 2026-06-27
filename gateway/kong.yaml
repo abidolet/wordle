@@ -1,7 +1,26 @@
 _format_version: "3.0"
 
-services:
+# --- NOUVEAU : On active le CORS globalement pour toutes les requêtes ---
+plugins:
+  - name: cors
+    config:
+      origins:
+        - "http://localhost:5173"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Content-Type
+        - Authorization
+      credentials: true
+      max_age: 3600
+# ------------------------------------------------------------------------
 
+services:
   - name: front
     host: front
     port: 5173
