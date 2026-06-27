@@ -1,22 +1,19 @@
 _format_version: "3.0"
 
 services:
+
   - name: front
-    url: http://front:80
+    host: front
+    port: 5173
     routes:
       - name: front
-        hosts:
-          - localhost
         paths:
           - /
-        strip_path: false
 
   - name: auth
     url: http://auth:8080
     routes:
       - name: auth-public
-        hosts:
-          - localhost
         paths:
           - /auth/register
           - /auth/login
@@ -24,8 +21,6 @@ services:
         strip_path: false
 
       - name: auth-private
-        hosts:
-          - localhost
         paths:
           - /auth/me
           - /auth/logout

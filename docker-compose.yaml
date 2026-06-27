@@ -55,10 +55,9 @@ services:
       retries: 10
 
   front:
-    image: httpd:alpine
-    volumes:
-      - ./front:/usr/local/apache2/htdocs
-    restart: unless-stopped
+    build:
+      context: ./front
+      dockerfile: Dockerfile
 
 volumes:
   ssl_data:
