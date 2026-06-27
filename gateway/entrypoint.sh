@@ -1,4 +1,7 @@
 #!/bin/sh
+
+envsubst '$JWT_SECRET' < /etc/kong/kong.template.yaml > /etc/kong/kong.yaml
+
 set -e
 
 SSL_DIR=/etc/kong/ssl

@@ -2,7 +2,7 @@ FROM kong:alpine
 
 USER root
 
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl gettext
 
 RUN mkdir -p /etc/kong/ssl
 
