@@ -22,6 +22,11 @@ plugins:
         - Authorization
       credentials: true
       max_age: 3600
+  
+  - name: rate-limiting
+    config:
+      minute: 100
+      policy: local
 
 services:
   - name: auth
@@ -33,6 +38,11 @@ services:
           - /auth/login
           - /auth/refresh
         strip_path: false
+        plugins:
+          - name: rate-limiting
+            config:
+              minute: 10
+              policy: local
 
       - name: auth-private
         paths:
