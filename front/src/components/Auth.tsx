@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-
+import { useEffect } from "react";
 function Auth() {
-  // 1. On récupère la fonction logout en plus de isLoggedIn
-  const { isLoggedIn, logout } = useAuth();
-
+  const { isLoggedIn, token, fetchGameStatus, gameData, logout } = useAuth();
+  useEffect(() => {
+    if (isLoggedIn && token) {
+      fetchGameStatus(token);
+    }
+  }, [isLoggedIn, token]);
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
       <h1 className="text-6xl font-bold mb-12 text-gray-800 tracking-widest drop-shadow-md">
@@ -13,7 +16,6 @@ function Auth() {
 
       <div className="flex flex-col items-center">
         {isLoggedIn ? (
-          /* --- NOUVEAU : Un conteneur pour le bouton PLAY et le bouton Déconnexion --- */
           <div className="flex flex-col items-center space-y-6">
             <Link
               to="/play"
@@ -22,13 +24,20 @@ function Auth() {
               PLAY
             </Link>
 
-            {/* Le bouton de déconnexion */}
             <button
               onClick={logout}
               className="text-gray-500 hover:text-red-500 font-semibold underline transition-colors"
             >
               Se déconnecter
             </button>
+            {isLoggedIn && gameData && (
+              <div className="mt-8 text-gray-600">
+                <p>
+                  Parties en cours : {gameData.attempts.length} tentatives
+                  effectuées
+                </p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex space-x-6">

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "./AuthContext";
 import { Link, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { login, isLoggedIn } = useAuth();
+  const navigate = useNavigate();
   if (isLoggedIn) {
     return <Navigate to="/" replace />;
   }
@@ -25,9 +27,8 @@ function SignIn() {
       const data = await response.json();
 
       if (response.ok) {
-        login();
-        navigate("/play");
-        console.log("Connexion réussie ! Voici le token :", data);
+        login(data.accessToken);
+        navigate("/");
       } else {
         console.error("Identifiants incorrects :", data);
       }
