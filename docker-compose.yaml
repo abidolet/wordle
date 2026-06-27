@@ -1,0 +1,32 @@
+services:
+
+  kong:
+
+    build:
+      context: gateway
+      dockerfile: Dockerfile
+
+    env_file:
+      - .env
+
+    ports:
+      - "8443:8443"
+
+    volumes:
+      - ./gateway/kong.yaml:/etc/kong/kong.yaml
+      - ssl:/etc/kong/ssl
+
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  front:
+    image: httpd:alpine
+    volumes:
+      - ./front:/usr/local/apache2/htdocs
+
+
+volumes:
+  ssl:

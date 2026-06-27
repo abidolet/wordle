@@ -1,0 +1,13 @@
+_format_version: "3.0"
+
+services:
+
+  - name: front
+    url: http://front:80
+    routes:
+      - name: front
+        hosts:
+          - localhost
+        paths:
+          - /
+        strip_path: false
