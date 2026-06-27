@@ -9,45 +9,46 @@ namespace auth.Services;
 
 public class TokenService
 {
-    private readonly IConfiguration _config;
+	private readonly IConfiguration _config;
 
-    public TokenService(IConfiguration config)
-    {
-        _config = config;
-    }
+	public TokenService(IConfiguration config)
+	{
+		_config = config;
+	}
 
-    public (string token, DateTime expiresAt) GenerateAccessToken(AppUser user)
-    {
-        var expiresAt = DateTime.UtcNow.AddSeconds(20);
+	public (string token, string jti, DateTime expiresAt) GenerateAccessToken(AppUser user)
+	{
+		var expiresAt = DateTime.UtcNow.AddMinutes(15);
+		var jti = Guid.NewGuid().ToString();
 
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(JwtRegisteredClaimNames.Iat,
-                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
-                ClaimValueTypes.Integer64)
-        };
+		var claims = new[]
+		{
+			new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+			new Claim(JwtRegisteredClaimNames.Email, user.Email!),
+			new Claim(JwtRegisteredClaimNames.Jti, jti),
+			new Claim(JwtRegisteredClaimNames.Iat,
+				DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+				ClaimValueTypes.Integer64)
+		};
 
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_config["Jwt_Secret"]!));
+		var key = new SymmetricSecurityKey(
+			Encoding.UTF8.GetBytes(_config["Jwt_Secret"]!));
 
-        var token = new JwtSecurityToken(
-            issuer: _config["Jwt_Issuer"],
-            audience: _config["Jwt_Audience"],
-            claims: claims,
-            expires: expiresAt,
-            signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
-        );
+		var token = new JwtSecurityToken(
+			issuer: _config["Jwt_Issuer"],
+			audience: _config["Jwt_Audience"],
+			claims: claims,
+			expires: expiresAt,
+			signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256)
+		);
 
-        return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
-    }
+		return (new JwtSecurityTokenHandler().WriteToken(token), jti, expiresAt);
+	}
 
-    public string GenerateRefreshToken()
-    {
-        var bytes = new byte[64];
-        RandomNumberGenerator.Fill(bytes);
-        return Convert.ToBase64String(bytes);
-    }
+	public string GenerateRefreshToken()
+	{
+		var bytes = new byte[64];
+		RandomNumberGenerator.Fill(bytes);
+		return Convert.ToBase64String(bytes);
+	}
 }

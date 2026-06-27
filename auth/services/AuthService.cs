@@ -1,16 +1,17 @@
 using auth.Data;
 using auth.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace auth.Services;
 
-public class auth
+public class AuthManager
 {
 	private readonly UserManager<AppUser> _userManager;
 	private readonly TokenService _tokenService;
 	private readonly AppDbContext _db;
 
-	public auth(
+	public AuthManager(
 		UserManager<AppUser> userManager,
 		TokenService tokenService,
 		AppDbContext db)
@@ -20,7 +21,7 @@ public class auth
 		_db = db;
 	}
 
-	public async Task<(bool success, string? error, AuthResponse? response)> RegisterAsync(
+	public async Task<(bool success, string? error, (AuthResponse response, string refreshToken)?)> RegisterAsync(
 		string email, string password)
 	{
 		var existing = await _userManager.FindByEmailAsync(email);
@@ -39,7 +40,7 @@ public class auth
 		return (true, null, await BuildTokenResponse(user));
 	}
 
-	public async Task<(bool success, string? error, AuthResponse? response)> LoginAsync(
+	public async Task<(bool success, string? error, (AuthResponse response, string refreshToken)?)> LoginAsync(
 		string email, string password)
 	{
 		var user = await _userManager.FindByEmailAsync(email);
@@ -57,7 +58,7 @@ public class auth
 		return (true, null, await BuildTokenResponse(user));
 	}
 
-	public async Task<(bool success, string? error, AuthResponse? response)> RefreshAsync(
+	public async Task<(bool success, string? error, (AuthResponse response, string refreshToken)?)> RefreshAsync(
 		string refreshToken)
 	{
 		var user = _db.Users
@@ -69,7 +70,7 @@ public class auth
 		return (true, null, await BuildTokenResponse(user));
 	}
 
-	public async Task<bool> LogoutAsync(string userId)
+	public async Task<bool> LogoutAsync(string userId, string jti, DateTime tokenExpiry)
 	{
 		var user = await _userManager.FindByIdAsync(userId);
 		if (user == null) return false;
@@ -77,18 +78,26 @@ public class auth
 		user.RefreshToken = null;
 		user.RefreshTokenExpiry = null;
 		await _userManager.UpdateAsync(user);
+
+		_db.RevokedTokens.Add(new RevokedToken { Jti = jti, ExpiresAt = tokenExpiry });
+		await _db.SaveChangesAsync();
 		return true;
 	}
 
-	private async Task<AuthResponse> BuildTokenResponse(AppUser user)
+	public async Task<bool> IsTokenRevokedAsync(string jti)
 	{
-		var (accessToken, expiresAt) = _tokenService.GenerateAccessToken(user);
+		return await _db.RevokedTokens.AnyAsync(t => t.Jti == jti);
+	}
+
+	private async Task<(AuthResponse response, string refreshToken)> BuildTokenResponse(AppUser user)
+	{
+		var (accessToken, _, expiresAt) = _tokenService.GenerateAccessToken(user);
 		var refreshToken = _tokenService.GenerateRefreshToken();
 
 		user.RefreshToken = refreshToken;
 		user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
 		await _userManager.UpdateAsync(user);
 
-		return new AuthResponse(accessToken, refreshToken, expiresAt);
+		return (new AuthResponse(accessToken, expiresAt), refreshToken);
 	}
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"math/rand"
@@ -69,9 +70,9 @@ func main() {
 	ensureTodayWord()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /game/create", handleCreate)
-	mux.HandleFunc("POST /game/guess", handleGuess)
-	mux.HandleFunc("GET /game/status", handleStatus)
+	mux.HandleFunc("/game/create", handleCreate)
+	mux.HandleFunc("/game/guess", handleGuess)
+	mux.HandleFunc("/game/status", handleStatus)
 
 	log.Println("word-service listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
@@ -132,7 +133,30 @@ func nextMidnight() time.Time {
 }
 
 func userID(r *http.Request) string {
-	return r.Header.Get("X-User-Id")
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+		return ""
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+	
+	parts := strings.Split(tokenStr, ".")
+	if len(parts) != 3 {
+		return ""
+	}
+	
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return ""
+	}
+	
+	var claims map[string]any
+	if err := json.Unmarshal(payload, &claims); err != nil {
+		return ""
+	}
+	
+	sub, _ := claims["sub"].(string)
+	return sub
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -142,12 +166,12 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func handleCreate(w http.ResponseWriter, r *http.Request) {
-	uid := userID(r)
-	if uid == "" {
-		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{"method not allowed"})
 		return
 	}
 
+	uid := userID(r)
 	key := gameKey(uid)
 	exists, _ := rdb.Exists(ctx, key).Result()
 	if exists > 0 {
@@ -169,9 +193,8 @@ func handleCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGuess(w http.ResponseWriter, r *http.Request) {
-	uid := userID(r)
-	if uid == "" {
-		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{"method not allowed"})
 		return
 	}
 
@@ -193,6 +216,7 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID(r)
 	key := gameKey(uid)
 	raw, err := rdb.Get(ctx, key).Result()
 	if err != nil {
@@ -232,12 +256,12 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	uid := userID(r)
-	if uid == "" {
-		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{"method not allowed"})
 		return
 	}
 
+	uid := userID(r)
 	key := gameKey(uid)
 	raw, err := rdb.Get(ctx, key).Result()
 	if err != nil {

@@ -53,6 +53,26 @@ services:
       test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}"]
       interval: 5s
       retries: 10
+  
+  game:
+    build:
+      context: game
+      dockerfile: Dockerfile
+    environment:
+      REDIS_ADDR: ${REDIS_ADDR}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
 
   front:
     build:
@@ -71,3 +91,4 @@ volumes:
   ssl_data:
   dp_keys:
   pg_data:
+  redis_data:
