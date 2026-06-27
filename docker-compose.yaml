@@ -58,6 +58,14 @@ services:
     build:
       context: ./front
       dockerfile: Dockerfile
+    develop:
+      watch:
+        - action: sync
+          path: ./front/src
+          target: /app/src
+        - action: rebuild
+          path: ./front/package.json
+          target: /app/package.json
 
 volumes:
   ssl_data:
