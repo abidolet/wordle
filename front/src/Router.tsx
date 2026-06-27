@@ -5,20 +5,20 @@ import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 
 export const router = createBrowserRouter([
-  {
-    path: "/play",
-    element: <Game />,
-  },
-  {
-    path: "/",
-    element: <Auth />,
-  },
-  {
-    path: "/auth/login",
-    element: <SignIn />,
-  },
-  {
-    path: "/auth/register",
-    element: <SignUp />,
-  },
+	{
+		path: "/play",
+		element: <Game />,
+	},
+	{
+		path: "/",
+		element: <Auth />,
+	},
+	{
+		path: "/auth/login",
+		element: <SignIn />,
+	},
+	{
+		path: "/auth/register",
+		element: <SignUp />,
+	},
 ]);
