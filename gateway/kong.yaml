@@ -22,7 +22,7 @@ plugins:
         - Authorization
       credentials: true
       max_age: 3600
-  
+
   - name: rate-limiting
     config:
       minute: 100
