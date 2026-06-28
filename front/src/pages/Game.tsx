@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, checkAuth, clearToken, setToken } from '../api/client';
+import { apiFetch, checkAuth, setToken } from '../api/client';
 
 interface LetterResult {
   letter: string;
@@ -128,13 +128,6 @@ export default function Game()
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, [currentGuess, submitGuess, gameState]);
 
-	async function handleLogout() 
-	{
-		await apiFetch('/api/auth/logout', { method: 'POST' });
-		clearToken();
-		navigate('/');
-	}
-
 	if (!gameState) 
 	{
 		return <p>Loading...</p>;
@@ -145,13 +138,6 @@ export default function Game()
 	return (
 		<div className="flex flex-col items-center justify-center min-h-screen w-full bg-gray-100 p-4">
 			<h1 className="text-4xl font-bold mb-6">Wordle</h1>
-      
-			<button 
-				onClick={handleLogout} 
-				className="mb-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-			>
-        Logout
-			</button>
       
 			{isGameOver ? (
 				<div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 rounded-lg text-center shadow-sm">

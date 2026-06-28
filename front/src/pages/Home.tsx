@@ -47,8 +47,6 @@ export default function Home()
 			</div>
 
 			<div className="mt-12 text-center text-sm text-gray-500">
-				<p>June 28, 2026</p>
-				<p>No. 1835</p>
 				<p>Created by Abidolet, Yondemon</p>
 			</div>
 		</div>
