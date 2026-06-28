@@ -77,7 +77,7 @@ export default function Home()
 
 				<h2 className="mb-10 text-xl font-medium text-gray-700">Log in or create an account</h2>
 
-				<form onSubmit={handleContinue} className="space-y-4">
+				<form onSubmit={handleContinue} className="space-y-4 ">
 					<div className="text-left">
 						<label htmlFor="email" className="sr-only">Email address</label>
 						<input
@@ -86,7 +86,7 @@ export default function Home()
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 							placeholder="Enter your email"
-							className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 focus:border-gray-900 focus:outline-none"
+							className="mb-4 w-full rounded-lg border-2 border-gray-300 px-4 py-3 focus:border-gray-900 focus:outline-none"
 							required
 							autoFocus
 						/>
@@ -101,7 +101,7 @@ export default function Home()
 					<button 
 						type="submit" 
 						disabled={submitting}
-						className="w-full rounded-full bg-gray-900 py-3 font-bold text-white transition hover:bg-gray-800 disabled:opacity-50"
+						className="w-full rounded-full bg-gray-900 py-3 font-bold text-white transition hover:bg-gray-800 disabled:opacity-50 mb-4"
 					>
 						{submitting ? 'Checking...' : 'Continue'}
 					</button>
