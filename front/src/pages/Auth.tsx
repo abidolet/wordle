@@ -44,11 +44,10 @@ export default function Home()
 				body: JSON.stringify({ email }),
 			});
 
-			if (res.ok)
+			if (res.ok) 
 			{
 				const { exists } = await res.json();
-				const path = exists ? '/login' : '/register';
-				navigate(path, { state: { email } });
+				navigate(exists ? '/login' : '/register', { state: { email } });
 			}
 			else 
 			{
@@ -71,28 +70,41 @@ export default function Home()
 	}
 
 	return (
-		<div>
-			<h1>Wordle</h1>
-			<h2>Log in or create an account</h2>
+		<div className="flex min-h-screen flex-col items-center justify-center bg-white p-6 font-sans text-gray-900">
+			<div className="w-full max-w-sm text-center">
+				<h1 className="mb-2 text-6xl font-bold tracking-tight">Wordle</h1>
+				<h2 className="mb-10 text-xl font-medium text-gray-700">Log in or create an account</h2>
 
-			<form onSubmit={handleContinue}>
-				<label htmlFor="email">Email address</label>
-				<input
-					id="email"
-					type="email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					placeholder="Enter your email"
-					required
-					autoFocus
-				/>
+				<form onSubmit={handleContinue} className="space-y-4">
+					<div className="text-left">
+						<label htmlFor="email" className="sr-only">Email address</label>
+						<input
+							id="email"
+							type="email"
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+							placeholder="Enter your email"
+							className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 focus:border-gray-900 focus:outline-none"
+							required
+							autoFocus
+						/>
+					</div>
 
-				{error && <p role="alert">{error}</p>}
+					{error && (
+						<p role="alert" className="text-sm text-red-600">
+							{error}
+						</p>
+					)}
 
-				<button type="submit" disabled={submitting}>
-					{submitting ? 'Checking...' : 'Continue'}
-				</button>
-			</form>
+					<button 
+						type="submit" 
+						disabled={submitting}
+						className="w-full rounded-full bg-gray-900 py-3 font-bold text-white transition hover:bg-gray-800 disabled:opacity-50"
+					>
+						{submitting ? 'Checking...' : 'Continue'}
+					</button>
+				</form>
+			</div>
 		</div>
 	);
 }
