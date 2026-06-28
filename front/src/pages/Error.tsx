@@ -48,24 +48,20 @@ export default function Error() {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-gray-200 p-6 text-center select-none">
             
-            {/* Art ASCII avec couleur verte style terminal et légère animation */}
             {currentArt && (
                 <pre className="font-mono text-green-400 text-xl md:text-2xl leading-snug mb-8 animate-pulse drop-shadow-md">
                     {currentArt}
                 </pre>
             )}
 
-            {/* Titre du code d'erreur stylisé */}
             <h1 className="text-7xl md:text-8xl font-black text-white mb-2 tracking-tighter drop-shadow-lg">
                 {code}
             </h1>
             
-            {/* Message d'erreur */}
             <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-md mx-auto">
                 {messages[code] ?? 'An unexpected error occurred.'}
             </p>
             
-            {/* Bouton avec effets de survol (hover) */}
             <button 
                 onClick={() => navigate('/')}
                 className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold shadow-lg hover:shadow-indigo-500/50 transition-all duration-300 transform hover:-translate-y-1 active:translate-y-0"
