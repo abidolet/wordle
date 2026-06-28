@@ -16,15 +16,16 @@ import (
 )
 
 var (
-	rdb       *redis.Client
-	wordList  []string
-	ctx       = context.Background()
+	rdb      *redis.Client
+	wordList []string
+	ctx      = context.Background()
 )
 
 type Game struct {
-	Word     string   `json:"word"`
-	Attempts []string `json:"attempts"`
-	Won      bool     `json:"won"`
+	Word     string           `json:"word"`
+	Attempts []string         `json:"attempts"`
+	Results  [][]LetterResult `json:"results"`
+	Won      bool             `json:"won"`
 }
 
 type GuessRequest struct {
@@ -37,17 +38,18 @@ type LetterResult struct {
 }
 
 type GuessResponse struct {
-	Results        []LetterResult `json:"results"`
-	Won            bool           `json:"won"`
-	Lost           bool           `json:"lost"`
-	AttemptsLeft   int            `json:"attemptsLeft"`
+	Results      []LetterResult `json:"results"`
+	Won          bool           `json:"won"`
+	Lost         bool           `json:"lost"`
+	AttemptsLeft int            `json:"attemptsLeft"`
 }
 
 type StatusResponse struct {
-	AttemptsLeft int      `json:"attemptsLeft"`
-	Won          bool     `json:"won"`
-	Lost         bool     `json:"lost"`
-	Attempts     []string `json:"attempts"`
+	AttemptsLeft int              `json:"attemptsLeft"`
+	Won          bool             `json:"won"`
+	Lost         bool             `json:"lost"`
+	Attempts     []string         `json:"attempts"`
+	Results      [][]LetterResult `json:"results"`
 }
 
 type ErrorResponse struct {
@@ -138,22 +140,21 @@ func userID(r *http.Request) string {
 	}
 
 	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-	
 	parts := strings.Split(tokenStr, ".")
 	if len(parts) != 3 {
 		return ""
 	}
-	
+
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return ""
 	}
-	
+
 	var claims map[string]any
 	if err := json.Unmarshal(payload, &claims); err != nil {
 		return ""
 	}
-	
+
 	sub, _ := claims["sub"].(string)
 	return sub
 }
@@ -179,6 +180,12 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	uid := userID(r)
+	if uid == "" {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
+		return
+	}
+
 	var req GuessRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, ErrorResponse{"invalid body"})
@@ -197,11 +204,10 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uid := userID(r)
 	key := gameKey(uid)
 	raw, err := rdb.Get(ctx, key).Result()
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, ErrorResponse{"no active game, call /api/game/create first"})
+		writeJSON(w, http.StatusNotFound, ErrorResponse{"no active game"})
 		return
 	}
 
@@ -218,8 +224,9 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	game.Attempts = append(game.Attempts, guess)
 	results := compare(game.Word, guess)
+	game.Attempts = append(game.Attempts, guess)
+	game.Results = append(game.Results, results)
 
 	if guess == game.Word {
 		game.Won = true
@@ -237,11 +244,6 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleStatus(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{"method not allowed"})
-		return
-	}
-
 	uid := userID(r)
 	if uid == "" {
 		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
@@ -257,7 +259,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusInternalServerError, ErrorResponse{"word not available"})
 			return
 		}
-		game := Game{Word: todayWord, Attempts: []string{}, Won: false}
+		game := Game{Word: todayWord, Attempts: []string{}, Results: [][]LetterResult{}, Won: false}
 		data, _ := json.Marshal(game)
 		rdb.Set(ctx, key, data, time.Until(nextMidnight()))
 		raw = string(data)
@@ -271,6 +273,7 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 		Won:          game.Won,
 		Lost:         !game.Won && len(game.Attempts) >= 6,
 		Attempts:     game.Attempts,
+		Results:      game.Results,
 	})
 }
 
