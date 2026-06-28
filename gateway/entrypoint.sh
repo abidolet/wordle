@@ -1,6 +1,6 @@
 #!/bin/sh
 
-envsubst '$JWT_SECRET' < /etc/kong/kong.template.yaml > /etc/kong/kong.yaml
+envsubst '$JWT_SECRET $KONG_ALLOWED_ORIGIN' < /etc/kong/kong.template.yaml > /etc/kong/kong.yaml
 
 set -e
 

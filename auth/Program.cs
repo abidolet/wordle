@@ -3,6 +3,7 @@ using auth.Models;
 using auth.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,8 @@ builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthManager>();
 builder.Services.AddControllers();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<FortyTwoOAuthService>();
 
 var app = builder.Build();
 
@@ -34,6 +37,11 @@ using (var scope = app.Services.CreateScope())
 	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 	db.Database.EnsureCreated();
 }
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+	ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 app.UsePathBase("/api");
 app.MapControllers();

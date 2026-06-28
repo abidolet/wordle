@@ -35,6 +35,9 @@ services:
       Jwt_Issuer: ${JWT_ISSUER}
       Jwt_Audience: ${JWT_AUDIENCE}
       ASPNETCORE_URLS: http://+:8080
+      FortyTwo_ClientId: ${FORTY_TWO_CLIENT_ID}
+      FortyTwo_ClientSecret: ${FORTY_TWO_CLIENT_SECRET}
+      FortyTwo_RedirectUri: ${FORTY_TWO_REDIRECT_URI}
     volumes:
       - dp_keys:/root/.aspnet/DataProtection-Keys
     depends_on:

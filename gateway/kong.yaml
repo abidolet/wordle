@@ -11,6 +11,7 @@ plugins:
     config:
       origins:
         - "http://localhost:5173"
+        - "${KONG_URL}"
       methods:
         - GET
         - POST
@@ -25,7 +26,7 @@ plugins:
 
   - name: rate-limiting
     config:
-      minute: 100
+      minute: 500
       policy: local
 
 services:
@@ -38,6 +39,8 @@ services:
           - /api/auth/login
           - /api/auth/check-email
           - /api/auth/refresh
+          - /api/auth/oauth/42
+          - /api/auth/oauth/42/callback
         strip_path: false
         plugins:
           - name: rate-limiting

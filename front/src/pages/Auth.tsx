@@ -103,7 +103,17 @@ export default function Home()
 					>
 						{submitting ? 'Checking...' : 'Continue'}
 					</button>
+
 				</form>
+
+				<p className="text-gray-500">or</p>
+
+				<a 
+					href="/api/auth/oauth/42"
+					className="mt-4 block w-full rounded-full border-2 border-gray-900 py-3 font-bold text-center text-gray-900 transition hover:bg-gray-100 bg-red-500"
+				>
+					Continue with 42
+				</a>
 			</div>
 		</div>
 	);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch, checkAuth, clearToken } from '../api/client';
+import { apiFetch, checkAuth, clearToken, setToken } from '../api/client';
 
 interface LetterResult
 {
@@ -32,6 +32,18 @@ export default function Game()
 	const [currentGuess, setCurrentGuess] = useState('');
 	const [error, setError] = useState('');
 	const [submitting, setSubmitting] = useState(false);
+
+	useEffect(() => 
+	{
+		const params = new URLSearchParams(window.location.search);
+		const token = params.get('token');
+		if (token) 
+		{
+			setToken(token);
+			sessionStorage.setItem('auth', '1');
+			window.history.replaceState({}, '', '/game');
+		}
+	}, []);
 
 	useEffect(() => 
 	{
