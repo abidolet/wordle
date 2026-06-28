@@ -70,9 +70,9 @@ func main() {
 	ensureTodayWord()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/game/create", handleCreate)
-	mux.HandleFunc("/game/guess", handleGuess)
-	mux.HandleFunc("/game/status", handleStatus)
+	mux.HandleFunc("/api/game/create", handleCreate)
+	mux.HandleFunc("/api/game/guess", handleGuess)
+	mux.HandleFunc("/api/game/status", handleStatus)
 
 	log.Println("word-service listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
@@ -220,7 +220,7 @@ func handleGuess(w http.ResponseWriter, r *http.Request) {
 	key := gameKey(uid)
 	raw, err := rdb.Get(ctx, key).Result()
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, ErrorResponse{"no active game, call /game/create first"})
+		writeJSON(w, http.StatusNotFound, ErrorResponse{"no active game, call /api/game/create first"})
 		return
 	}
 

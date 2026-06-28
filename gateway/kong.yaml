@@ -34,9 +34,10 @@ services:
     routes:
       - name: auth-public
         paths:
-          - /auth/register
-          - /auth/login
-          - /auth/refresh
+          - /api/auth/register
+          - /api/auth/login
+          - /api/auth/check-email
+          - /api/auth/refresh
         strip_path: false
         plugins:
           - name: rate-limiting
@@ -46,8 +47,8 @@ services:
 
       - name: auth-private
         paths:
-          - /auth/me
-          - /auth/logout
+          - /api/auth/me
+          - /api/auth/logout
         strip_path: false
         plugins:
           - name: jwt
@@ -57,21 +58,13 @@ services:
               header_names:
                 - Authorization
               key_claim_name: iss
-          - name: request-transformer
-            config:
-              add:
-                headers:
-                  - "X-User-Id:$(jwt.claims.sub)"
-                  - "X-JWT-Jti:$(jwt.claims.jti)"
-                  - "X-JWT-Exp:$(jwt.claims.exp)"
-                  - "X-JWT-Email:$(jwt.claims.email)"
 
   - name: game
     url: http://game:8080
     routes:
       - name: game
         paths:
-          - /game
+          - /api/game
         strip_path: false
         plugins:
           - name: jwt

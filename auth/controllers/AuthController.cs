@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using auth.Models;
 using auth.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Identity;
 
 namespace auth.Controllers;
 
@@ -10,6 +11,7 @@ namespace auth.Controllers;
 public class AuthController : ControllerBase
 {
 	private readonly AuthManager _authManager;
+	private readonly UserManager<AppUser> _userManager;
 
 	private const string RefreshTokenCookie = "refresh_token";
 
@@ -18,13 +20,14 @@ public class AuthController : ControllerBase
 		HttpOnly = true,
 		Secure = true,
 		SameSite = SameSiteMode.Strict,
-		Path = "/auth/refresh",
+		Path = "/api/auth/refresh",
 		MaxAge = TimeSpan.FromDays(7)
 	};
 
-	public AuthController(AuthManager authManager)
+	public AuthController(AuthManager authManager, UserManager<AppUser> userManager)
 	{
 		_authManager = authManager;
+		_userManager = userManager;
 	}
 
 	[HttpPost("register")]
@@ -66,18 +69,40 @@ public class AuthController : ControllerBase
 	[HttpPost("logout")]
 	public async Task<IActionResult> Logout()
 	{
-		var userId = Request.Headers["X-User-Id"].FirstOrDefault();
-		var jti = Request.Headers["X-JWT-Jti"].FirstOrDefault();
-		var expHeader = Request.Headers["X-JWT-Exp"].FirstOrDefault();
+		var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+		if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+			return Unauthorized(new MessageResponse("Missing token"));
 
-		if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jti) || string.IsNullOrEmpty(expHeader))
-			return Unauthorized(new MessageResponse("Missing identity headers"));
+		var tokenStr = authHeader.Substring("Bearer ".Length);
+		var handler = new JwtSecurityTokenHandler();
 
-		var expiry = DateTimeOffset.FromUnixTimeSeconds(long.Parse(expHeader)).UtcDateTime;
+		JwtSecurityToken jwt;
+		try
+		{
+			jwt = handler.ReadJwtToken(tokenStr);
+		}
+		catch
+		{
+			return Unauthorized(new MessageResponse("Invalid token"));
+		}
+
+		var userId = jwt.Subject;
+		var jti = jwt.Id;
+		var expiry = jwt.ValidTo;
+
+		if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(jti))
+			return Unauthorized(new MessageResponse("Invalid token claims"));
+
 		await _authManager.LogoutAsync(userId, jti, expiry);
-
 		DeleteRefreshCookie();
 		return Ok(new MessageResponse("Logged out successfully"));
+	}
+
+	[HttpPost("check-email")]
+	public async Task<IActionResult> CheckEmail([FromBody] CheckEmailRequest req)
+	{
+		var user = await _userManager.FindByEmailAsync(req.Email);
+		return Ok(new { exists = user != null });
 	}
 
 	[HttpGet("me")]
@@ -109,6 +134,6 @@ public class AuthController : ControllerBase
 	private void DeleteRefreshCookie() =>
 		Response.Cookies.Delete(RefreshTokenCookie, new CookieOptions
 		{
-			Path = "/auth/refresh"
+			Path = "/api/auth/refresh"
 		});
 }

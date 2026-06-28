@@ -32,9 +32,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
 	var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-	db.Database.Migrate();
+	db.Database.EnsureCreated();
 }
 
+app.UsePathBase("/api");
 app.MapControllers();
 
 const string Green = "\x1b[32m";
