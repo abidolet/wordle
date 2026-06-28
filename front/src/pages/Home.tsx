@@ -32,14 +32,7 @@ export default function Home()
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center bg-white font-sans text-gray-900">
-			<div className="mb-6 grid grid-cols-3 gap-1.5">
-				<div className="h-10 w-10 border-2 border-gray-900 bg-white" />
-				<div className="h-10 w-10 border-2 border-gray-900 bg-yellow-500" />
-				<div className="h-10 w-10 border-2 border-gray-900 bg-green-600" />
-				<div className="h-10 w-10 border-2 border-gray-900 bg-green-600" />
-				<div className="h-10 w-10 border-2 border-gray-900 bg-green-600" />
-				<div className="h-10 w-10 border-2 border-gray-900 bg-green-600" />
-			</div>
+			<img src="favicon.png" alt="Favicon" className="w-32 h-32"/>
 
 			<h1 className="mb-2 text-6xl font-bold tracking-tight">Wordle</h1>
 			<p className="mb-10 text-xl text-gray-700">Get 6 chances to guess a 5-letter word.</p>

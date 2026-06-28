@@ -18,7 +18,7 @@ export default function Home()
 			{
 				navigate('/game');
 			}
-			else 
+			else
 			{
 				setLoading(false);
 			}

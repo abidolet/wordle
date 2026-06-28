@@ -1,143 +1,193 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiFetch, checkAuth, clearToken } from '../api/client';
 
-interface LetterResult
-{
-	letter: string
-	status: 'correct' | 'present' | 'absent'
+interface LetterResult {
+  letter: string;
+  status: 'correct' | 'present' | 'absent';
 }
 
-interface GuessResult
-{
-	results: LetterResult[]
-	won: boolean
-	lost: boolean
-	attemptsLeft: number
+interface GuessResult {
+  results: LetterResult[];
+  won: boolean;
+  lost: boolean;
+  attemptsLeft: number;
 }
 
-interface GameState
-{
-	attemptsLeft: number
-	won: boolean
-	lost: boolean
-attempts: string[]
+interface GameState {
+  attemptsLeft: number;
+  won: boolean;
+  lost: boolean;
+  attempts: string[];
 }
 
-export default function Game() 
-{
-	const navigate = useNavigate();
-	const [gameState, setGameState] = useState<GameState | null>(null);
-	const [rows, setRows] = useState<LetterResult[][]>([]);
-	const [currentGuess, setCurrentGuess] = useState('');
-	const [error, setError] = useState('');
-	const [submitting, setSubmitting] = useState(false);
+export default function Game() {
+  const navigate = useNavigate();
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [rows, setRows] = useState<LetterResult[][]>([]);
+  const [currentGuess, setCurrentGuess] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-	useEffect(() => 
-	{
-		checkAuth().then(ok => 
-		{
-			if (!ok) 
-			{
-				navigate('/');
-				return;
-			}
-			apiFetch('/api/game')
-				.then(res => res.json())
-				.then((data: GameState) => setGameState(data));
-		});
-	}, [navigate]);
 
-	async function handleGuess(e: React.FormEvent) 
-	{
-		e.preventDefault();
-		if (currentGuess.length !== 5 || submitting) 
-		{
-			return;
-		}
+  const evaluateGuess = (guess: string, secret: string): LetterResult[] => {
+    const secretChars = secret.toUpperCase().split('');
+    const guessChars = guess.toUpperCase().split('');
+    const status: ('correct' | 'present' | 'absent')[] = new Array(5).fill('absent');
+    const usedInSecret = new Array(5).fill(false);
 
-		setSubmitting(true);
-		setError('');
+    for (let i = 0; i < 5; i++) {
+      if (guessChars[i] === secretChars[i]) {
+        status[i] = 'correct';
+        usedInSecret[i] = true;
+      }
+    }
 
-		const res = await apiFetch('/api/game/guess',
-			{
-				method: 'POST',
-				body: JSON.stringify({ guess: currentGuess }),
-			});
+    for (let i = 0; i < 5; i++) {
+      if (status[i] !== 'correct') {
+        const charIndex = secretChars.findIndex((char, idx) => char === guessChars[i] && !usedInSecret[idx]);
+        if (charIndex !== -1) {
+          status[i] = 'present';
+          usedInSecret[charIndex] = true;
+        }
+      }
+    }
 
-		if (res.status === 400) 
-		{
-			const data = await res.json();
-			setError(data.message);
-			setSubmitting(false);
-			return;
-		}
+    return guessChars.map((char, i) => ({ letter: char, status: status[i] }));
+  };
 
-		const data: GuessResult = await res.json();
+  useEffect(() => {
+    checkAuth().then(ok => {
+      if (!ok) {
+        navigate('/');
+        return;
+      }
+      apiFetch('/api/game')
+        .then(res => res.json())
+        .then((data: GameState) => {
+          setGameState(data);
+		  console.log(data);
+          
+          if (data.attempts && data.attempts.length > 0) {
+            const pastGuessesEvaluated = data.attempts.map(word => evaluateGuess(word, SECRET_WORD));
+            setRows(pastGuessesEvaluated);
+          }
+        });
+    });
+  }, [navigate]);
 
-		setRows(prev => [...prev, data.results]);
-		setGameState(prev => prev ?
-			{
-				...prev,
-				attemptsLeft: data.attemptsLeft,
-				won: data.won,
-				lost: data.lost,
-				attempts: [...prev.attempts, currentGuess],
-			} : prev);
-		setCurrentGuess('');
-		setSubmitting(false);
-	}
+  const submitGuess = useCallback(async (guess: string) => {
+    if (guess.length !== 5 || submitting || gameState?.won || gameState?.lost || gameState?.attemptsLeft === 0) return;
 
-	async function handleLogout() 
-	{
-		await apiFetch('/api/auth/logout', { method: 'POST' });
-		clearToken();
-		navigate('/');
-	}
+    setSubmitting(true);
+    setError('');
 
-	if (!gameState)
-	{
-		return <p>Loading...</p>;
-	}
+    const res = await apiFetch('/api/game/guess', {
+      method: 'POST',
+      body: JSON.stringify({ guess }),
+    });
 
-	return (
-		<div>
-			<h1>Wordle</h1>
-			<button type="button" onClick={handleLogout}>Logout</button>
-			<p>Attempts left: {gameState.attemptsLeft}</p>
+    if (res.status === 400) {
+      const data = await res.json();
+	  console.log(data);
+      setError(data.message);
+      setSubmitting(false);
+      return;
+    }
 
-			<div>
-				{rows.map((row, i) => (
-					<div key={i}>
-						{row.map((cell, j) => (
-							<span key={j} data-status={cell.status}>
-								{cell.letter}
-							</span>
-						))}
-					</div>
-				))}
-			</div>
+    const data: GuessResult = await res.json();
+	console.log(data);
 
-			{!gameState.won && !gameState.lost && (
-				<form onSubmit={handleGuess}>
-					<input
-						type="text"
-						value={currentGuess}
-						onChange={e => setCurrentGuess(e.target.value.toLowerCase())}
-						maxLength={5}
-						minLength={5}
-						autoFocus
-						disabled={submitting}
-					/>
-					{error && <p role="alert">{error}</p>}
-					<button type="submit" disabled={submitting || currentGuess.length !== 5}>
-						Guess
-					</button>
-				</form>
-			)}
+    setRows(prev => [...prev, data.results]);
+    setGameState(prev => prev ? {
+      ...prev,
+      attemptsLeft: data.attemptsLeft,
+      won: data.won,
+      lost: data.lost,
+      attempts: [...prev.attempts, guess],
+    } : prev);
+    
+    setCurrentGuess('');
+    setSubmitting(false);
+  }, [submitting, gameState]);
 
-			{gameState.won && <p>You won!</p>}
-			{gameState.lost && <p>You lost!</p>}
-		</div>
-	);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameState?.won || gameState?.lost || gameState?.attemptsLeft === 0) return;
+
+      if (/^[a-zA-Z]$/.test(e.key)) {
+        setCurrentGuess(prev => (prev.length < 5 ? prev + e.key.toUpperCase() : prev));
+      } else if (e.key === 'Backspace') {
+        setCurrentGuess(prev => prev.slice(0, -1));
+      } else if (e.key === 'Enter') {
+        submitGuess(currentGuess);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentGuess, submitGuess, gameState]);
+
+  async function handleLogout() {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+    clearToken();
+    navigate('/');
+  }
+
+  if (!gameState) return <p>Loading...</p>;
+
+  // Variable pour déterminer si le joueur a fini sa partie du jour
+  const isGameOver = gameState.won || gameState.lost || gameState.attemptsLeft === 0;
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen w-full bg-gray-100 p-4">
+      <h1 className="text-4xl font-bold mb-6">Wordle</h1>
+      
+      <button 
+        onClick={handleLogout} 
+        className="mb-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+      >
+        Logout
+      </button>
+      
+      {isGameOver ? (
+        <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 rounded-lg text-center shadow-sm">
+          <p className="text-xl font-bold text-yellow-800">Vous avez déjà joué aujourd'hui !</p>
+          <p className="text-yellow-700 mt-1">Revenez demain pour deviner un nouveau mot.</p>
+        </div>
+      ) : (
+        <p className="text-xl mb-4 font-semibold">Attempts left: {gameState.attemptsLeft}</p>
+      )}
+
+      {/* Grille centrée */}
+      <div className="grid grid-rows-6 gap-2 mb-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="grid grid-cols-5 gap-2">
+            {[...Array(5)].map((_, j) => {
+              const cell = rows[i]?.[j] || { letter: i === rows.length && !isGameOver ? currentGuess[j] : '', status: null };
+              
+              let bgColor = "bg-white border-gray-300 text-gray-800";
+              if (cell.status === "correct") bgColor = "bg-green-500 border-green-500 text-white";
+              if (cell.status === "present") bgColor = "bg-yellow-500 border-yellow-500 text-white";
+              if (cell.status === "absent") bgColor = "bg-gray-500 border-gray-500 text-white";
+              
+              return (
+                <div 
+                  key={j} 
+                  className={`${bgColor} w-20 h-20 sm:w-24 sm:h-24 border-2 flex items-center justify-center text-4xl font-bold uppercase transition-colors duration-300`}
+                >
+                  {cell.letter}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {error && <p className="text-red-500 font-bold mb-4">{error}</p>}
+      
+      {/* Messages de victoire / défaite */}
+      {gameState.won && <p className="text-green-600 text-2xl font-bold mt-2">Félicitations, vous avez gagné !</p>}
+    </div>
+  );
 }
