@@ -55,7 +55,9 @@ export default function Login()
 
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center bg-white p-6 font-sans text-gray-900">
-			<div className="w-full max-w-sm text-center">
+			<div className="flex min-h-screen flex-col items-center justify-center bg-white p-6 font-sans text-gray-900">
+				<img src="favicon.png" alt="Favicon" className="w-32 h-32 mb-8"/>
+
 				<h1 className="mb-2 text-6xl font-bold tracking-tight">Wordle</h1>
 				<h2 className="mb-10 text-xl font-medium text-gray-700">Welcome back</h2>
 
