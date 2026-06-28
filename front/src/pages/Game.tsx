@@ -185,6 +185,8 @@ export default function Game() {
       {error && <p className="text-red-500 font-bold mb-4">{error}</p>}
       
       {gameState.won && <p className="text-green-600 text-2xl font-bold mt-2">Congratulations, you won !</p>}
+      {gameState.lost && <p className="text-red-600 text-2xl font-bold mt-2">You lost...</p>}
+
     </div>
   );
 }
