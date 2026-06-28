@@ -70,9 +70,8 @@ func main() {
 	ensureTodayWord()
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/game/create", handleCreate)
+	mux.HandleFunc("/api/game", handleGame)
 	mux.HandleFunc("/api/game/guess", handleGuess)
-	mux.HandleFunc("/api/game/status", handleStatus)
 
 	log.Println("word-service listening on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
@@ -165,31 +164,13 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	json.NewEncoder(w).Encode(v)
 }
 
-func handleCreate(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+func handleGame(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		handleStatus(w, r)
+	default:
 		writeJSON(w, http.StatusMethodNotAllowed, ErrorResponse{"method not allowed"})
-		return
 	}
-
-	uid := userID(r)
-	key := gameKey(uid)
-	exists, _ := rdb.Exists(ctx, key).Result()
-	if exists > 0 {
-		writeJSON(w, http.StatusOK, map[string]string{"message": "game already exists"})
-		return
-	}
-
-	todayWord, err := rdb.Get(ctx, todayKey()).Result()
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, ErrorResponse{"word not available"})
-		return
-	}
-
-	game := Game{Word: todayWord, Attempts: []string{}, Won: false}
-	data, _ := json.Marshal(game)
-	rdb.Set(ctx, key, data, time.Until(nextMidnight()))
-
-	writeJSON(w, http.StatusCreated, map[string]string{"message": "game created"})
 }
 
 func handleGuess(w http.ResponseWriter, r *http.Request) {
@@ -262,11 +243,24 @@ func handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	uid := userID(r)
+	if uid == "" {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{"missing user id"})
+		return
+	}
+
 	key := gameKey(uid)
 	raw, err := rdb.Get(ctx, key).Result()
+
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, ErrorResponse{"no active game"})
-		return
+		todayWord, err := rdb.Get(ctx, todayKey()).Result()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, ErrorResponse{"word not available"})
+			return
+		}
+		game := Game{Word: todayWord, Attempts: []string{}, Won: false}
+		data, _ := json.Marshal(game)
+		rdb.Set(ctx, key, data, time.Until(nextMidnight()))
+		raw = string(data)
 	}
 
 	var game Game

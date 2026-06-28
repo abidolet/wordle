@@ -60,7 +60,7 @@ export async function apiFetch(url: string, options: RequestInit = {}):
 		clearToken();
 		window.location.href = '/error?code=500';
 	}
-	else if (res.status >= 400)
+	else if (res.status >= 402)
 	{
 		window.location.href = '/error?code=' + res.status;
 	}

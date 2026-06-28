@@ -10,7 +10,7 @@ export default tseslint.config(
 			"indent": ["error", "tab", { "SwitchCase": 1 }],
 			"no-mixed-spaces-and-tabs": "error",
 			"max-len": ["warn", {
-				"code": 80,
+				"code": 100,
 				"ignoreComments": true,
 				"ignoreStrings": true
 			}],
