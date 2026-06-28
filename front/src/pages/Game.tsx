@@ -28,7 +28,7 @@ export default function Game() {
   const [currentGuess, setCurrentGuess] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
+  const SECRET_WORD = "words"
 
   const evaluateGuess = (guess: string, secret: string): LetterResult[] => {
     const secretChars = secret.toUpperCase().split('');
@@ -136,7 +136,6 @@ export default function Game() {
 
   if (!gameState) return <p>Loading...</p>;
 
-  // Variable pour déterminer si le joueur a fini sa partie du jour
   const isGameOver = gameState.won || gameState.lost || gameState.attemptsLeft === 0;
 
   return (
@@ -152,14 +151,13 @@ export default function Game() {
       
       {isGameOver ? (
         <div className="mb-6 p-4 bg-yellow-200 border border-yellow-400 rounded-lg text-center shadow-sm">
-          <p className="text-xl font-bold text-yellow-800">Vous avez déjà joué aujourd'hui !</p>
-          <p className="text-yellow-700 mt-1">Revenez demain pour deviner un nouveau mot.</p>
+          <p className="text-xl font-bold text-yellow-800">You already played today !</p>
+          <p className="text-yellow-700 mt-1">Come back tomorrow to guess a new word !</p>
         </div>
       ) : (
         <p className="text-xl mb-4 font-semibold">Attempts left: {gameState.attemptsLeft}</p>
       )}
 
-      {/* Grille centrée */}
       <div className="grid grid-rows-6 gap-2 mb-6">
         {[...Array(6)].map((_, i) => (
           <div key={i} className="grid grid-cols-5 gap-2">
@@ -186,8 +184,9 @@ export default function Game() {
 
       {error && <p className="text-red-500 font-bold mb-4">{error}</p>}
       
-      {/* Messages de victoire / défaite */}
-      {gameState.won && <p className="text-green-600 text-2xl font-bold mt-2">Félicitations, vous avez gagné !</p>}
+      {gameState.won && <p className="text-green-600 text-2xl font-bold mt-2">Congratulations, you won !</p>}
+      {gameState.lost && <p className="text-red-600 text-2xl font-bold mt-2">You lost...</p>}
+
     </div>
   );
 }
